@@ -1,6 +1,6 @@
 const { GoogleGenAI } = require("@google/genai");
 const { z } = require("zod")
-
+const puppeteer = require("puppeteer")
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY });
 
 const MODEL = "gemini-3.5-flash-lite";
@@ -33,6 +33,8 @@ const interviewReportSchema = z.object({
 const interviewReportJsonSchema = z.toJSONSchema(interviewReportSchema)
 delete interviewReportJsonSchema.$schema
 
+
+
 async function generateInterviewReport({ resume, selfDescription, jobDescription }) {
 
     const prompt = `Generate an interview report for a candidate with the following details:
@@ -51,6 +53,7 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
     })
     return JSON.parse(response.text)
 }
+
 
 async function generatePdfFromHtml(htmlContent) {
     const browser = await puppeteer.launch()
@@ -71,11 +74,16 @@ async function generatePdfFromHtml(htmlContent) {
     return pdfBuffer
 }
 
+
+
 async function generateResumePdf({ resume, selfDescription, jobDescription }) {
 
     const resumePdfSchema = z.object({
         html: z.string().describe("The HTML content of the resume which can be converted to PDF using any library like puppeteer")
     })
+
+    const resumePdfJsonSchema = z.toJSONSchema(resumePdfSchema)
+    delete resumePdfJsonSchema.$schema
 
     const prompt = `Generate resume for a candidate with the following details:
                         Resume: ${resume}
@@ -95,7 +103,7 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
         contents: prompt,
         config: {
             responseMimeType: "application/json",
-            responseSchema: zodToJsonSchema(resumePdfSchema),
+            responseJsonSchema: resumePdfJsonSchema,
         }
     })
 
